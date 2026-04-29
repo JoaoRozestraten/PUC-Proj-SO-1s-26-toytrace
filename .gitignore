@@ -1,0 +1,23 @@
+# Arquivos objeto
+*.o
+
+# Arquivos de dependência (se usar -MMD, por exemplo)
+*.d
+
+# Executáveis gerados
+main
+a.out
+program
+bin/
+
+# Diretórios de build
+build/
+dist/
+
+# Bibliotecas compiladas
+*.so
+*.a
+
+# Arquivos temporários do editor/sistema
+*.swp
+.DS_Store
