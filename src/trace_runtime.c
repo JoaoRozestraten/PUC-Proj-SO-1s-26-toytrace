@@ -87,8 +87,17 @@ static int wait_for_initial_stop(pid_t child)
      *
      * Retorne 0 se o filho parou como esperado, -1 em erro.
      */
-    fprintf(stderr, "erro: TODO Semana 2: implementar wait_for_initial_stop()\n");
-    return -1;
+    int status;
+    // Pai espera o filho para em SIGSTOP
+    if (waitpid(child, &status, 0) == -1) {
+        perror("Erro na execução do waitpid");
+        return -1;
+    }
+    // Verifica se realmente parou
+    if (!WIFSTOPPED(status)) {
+        fprintf(stderr, "Filho não parou corretamente\n");
+        return -1;
+    }
 }
 
 static int configure_trace_options(pid_t child)
