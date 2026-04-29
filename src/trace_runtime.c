@@ -52,7 +52,28 @@ static pid_t launch_tracee(char *const argv[])
      *
      * Em erro, imprima uma mensagem com perror() e retorne -1.
      */
-    fprintf(stderr, "erro: TODO Semana 2: implementar launch_tracee()\n");
+    pid_t pid = fork();
+    // Entra na condicional se o processo for o filho
+    if (pid == 0) {
+        // Filho notifica ao kernel que será rastreado pelo pai
+        if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) == -1) {
+            perror("ptrace TRACEME");
+            _exit(1);
+        }
+        // Para imediatamente para o pai fazer o waitpid inicial
+        if (raise(SIGSTOP) != 0) {
+            perror("raise SIGSTOP");
+            _exit(1);
+        }
+        // Executa o programa requisitado
+        execvp(argv[0], argv);
+        // Se o execvp falhar, exibe o erro
+        perror("execvp falhou!");
+        _exit(1);
+    }else if (pid > 0) {
+        return pid;
+    }else
+        perror("Erro no fork");
     return -1;
 }
 
