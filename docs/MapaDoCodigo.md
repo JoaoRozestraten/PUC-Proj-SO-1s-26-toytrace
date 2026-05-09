@@ -23,3 +23,23 @@ Este documento tem como objetivo registrar o entendimento inicial sobre a estrut
 
 *   **Qual é a principal dúvida técnica do grupo neste momento?**
     A principal dúvida do grupo neste momento é entender como o `ptrace` deve ser utilizado na função `launch_tracee()`, especialmente a sequência correta de chamadas (`fork`, `ptrace`, `exec`) e como o processo filho passa a ser monitorado pelo processo pai.
+
+## Fluxograma do Código
+
+1. Inicia com a `main()` em `src/main.c`
+2. Chama `trace_program()` que inicializa o rastreamento em `src/trace_runtime.c`
+3. Chama `launch_tracee()`
+   - Cria o processo filho alvo com `fork()`
+   - O filho chama `ptrace(PTRACE_TRACEME)` para ser monitorado e para com `SIGSTOP`
+   - O filho executa o programa de fato usando `execvp()`
+4. Chama `wait_for_initial_stop()`
+   - O processo pai aguarda a parada inicial (o `SIGSTOP`) com `waitpid()`
+5. Chama `configure_trace_options()`
+   - Aplica configurações do ptrace, como `PTRACE_O_TRACESYSGOOD`
+6. Entra no laço principal de captura de syscalls:
+   - Chama `resume_until_next_syscall()`: libera o filho para executar até a próxima syscall usando `ptrace(PTRACE_SYSCALL)`
+   - Chama `wait_for_syscall_stop()`: o pai aguarda com `waitpid()` uma parada indicando syscall
+   - Chama `ptrace(PTRACE_GETREGS)`: obtém os registradores (x86_64) da chamada de sistema capturada
+   - Chama `fill_event_from_regs()`: converte os dados dos registradores em um struct `syscall_event`
+   - Invoca o callback `observer()` para notificar os demais componentes (como o `student_debug_raw_event` ou `student_pair_syscall`) sobre o evento
+   - Continua o loop infinito
