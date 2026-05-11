@@ -8,5 +8,5 @@ Implementada a configuração de opções do rastreamento no arquivo `src/trace_
 **Implementação 2 (NOME): `resume_until_next_syscall`**
 *(A ser implementado)* Lógica que permitirá prosseguir a execução do processo monitorado utilizando `ptrace(PTRACE_SYSCALL, ...)`. O objetivo é deixar o processo filho executar livremente até encontrar a próxima entrada ou saída de uma chamada de sistema, repassando eventuais sinais pendentes.
 
-**Implementação 3 (NOME): `wait_for_syscall_stop`**
-*(A ser implementado)* Lógica de sincronização no processo pai para aguardar o filho parar em uma chamada de sistema, utilizando `waitpid()`. A função deverá analisar o status retornado com macros como `WIFEXITED`, `WIFSIGNALED` e `WIFSTOPPED`, retornando estados específicos para informar se o processo terminou normalmente, por erro ou se realizou uma parada legítima de syscall (verificando o bit 0x80 do `TRACESYSGOOD`).
+**Implementação 3 (Daniel): `wait_for_syscall_stop`**
+Lógica de sincronização no processo pai para aguardar o filho parar em uma chamada de sistema, utilizando `waitpid()`. A função deverá analisar o status retornado com macros como `WIFEXITED`, `WIFSIGNALED` e `WIFSTOPPED`, retornando estados específicos para informar se o processo terminou normalmente, por erro ou se realizou uma parada legítima de syscall (verificando o bit 0x80 do `TRACESYSGOOD`).

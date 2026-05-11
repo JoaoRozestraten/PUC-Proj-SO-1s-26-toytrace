@@ -141,7 +141,7 @@ static int resume_until_next_syscall(pid_t child, int signal_to_deliver)
 static int wait_for_syscall_stop(pid_t child, int *status)
 {
     /*
-     * TODO Semana 3:
+     * FEITO Semana 3:
      *
      * Espere o filho com waitpid().
      *
@@ -156,7 +156,21 @@ static int wait_for_syscall_stop(pid_t child, int *status)
      * - com PTRACE_O_TRACESYSGOOD, syscall-stops aparecem com bit 0x80.
      * - paradas SIGTRAP comuns nao devem ser entregues de volta ao filho.
      */
-    fprintf(stderr, "erro: TODO Semana 3: implementar wait_for_syscall_stop()\n");
+
+    if (waitpid(child, status, 0) == -1) {
+        perror("waitpid");
+        return -1;
+    }
+
+    if (WIFEXITED(*status) || WIFSIGNALED(*status))
+        return 0;
+
+    if (WIFSTOPPED(*status)) {
+        if (WSTOPSIG(*status) & 0x80)
+            return 1;
+        return -1;
+    }
+
     return -1;
 }
 
