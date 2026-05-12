@@ -127,15 +127,21 @@ static int configure_trace_options(pid_t child)
 static int resume_until_next_syscall(pid_t child, int signal_to_deliver)
 {
     /*
-     * TODO Semana 3:
+     * Feito Semana 3:
      *
-     * Use ptrace(PTRACE_SYSCALL, ...) para deixar o filho executar ate a
-     * proxima entrada ou saida de syscall.
+     * Usa PTRACE_SYSCALL para continuar a execução do filho
+     * até a próxima entrada ou saída de syscall.
      *
-     * signal_to_deliver deve ser repassado como quarto argumento do ptrace.
+     * signal_to_deliver é repassado ao processo filho.
      */
-    fprintf(stderr, "erro: TODO Semana 3: implementar resume_until_next_syscall()\n");
-    return -1;
+
+    // Continua a execução do processo monitorado
+    if (ptrace(PTRACE_SYSCALL, child, NULL, signal_to_deliver) == -1) {
+        perror("ptrace SYSCALL falhou");
+        return -1;
+    }
+
+    return 0;
 }
 
 static int wait_for_syscall_stop(pid_t child, int *status)

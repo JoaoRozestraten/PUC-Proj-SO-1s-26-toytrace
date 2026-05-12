@@ -5,7 +5,7 @@ Resolvido o "TODO Semana 3", focado em configurar o `ptrace` para facilitar a de
 **Implementação 1 (João): `configure_trace_options`**
 Implementada a configuração de opções do rastreamento no arquivo `src/trace_runtime.c`. A opção `PTRACE_O_TRACESYSGOOD` foi ativada por meio de `ptrace(PTRACE_SETOPTIONS)`. Isso garante que o kernel adicione o bit 0x80 ao sinal `SIGTRAP` quando a parada for causada por uma chamada de sistema, permitindo diferenciá-la facilmente de paradas e sinais comuns.
 
-**Implementação 2 (NOME): `resume_until_next_syscall`**
+**Implementação 2 Gabriel: `resume_until_next_syscall`**
 *(A ser implementado)* Lógica que permitirá prosseguir a execução do processo monitorado utilizando `ptrace(PTRACE_SYSCALL, ...)`. O objetivo é deixar o processo filho executar livremente até encontrar a próxima entrada ou saída de uma chamada de sistema, repassando eventuais sinais pendentes.
 
 **Implementação 3 (Daniel): `wait_for_syscall_stop`**
