@@ -19,7 +19,7 @@ static void fill_event_from_regs(pid_t pid,
                                  struct syscall_event *ev)
 {
     /*
-     * FEITO Semana 4 (João):
+     * FEITO Semana 4:
      *
      * Preencha struct syscall_event usando os registradores x86_64.
      *
@@ -162,22 +162,30 @@ static int wait_for_syscall_stop(pid_t child, int *status)
      * - com PTRACE_O_TRACESYSGOOD, syscall-stops aparecem com bit 0x80.
      * - paradas SIGTRAP comuns nao devem ser entregues de volta ao filho.
      */
+    int sig;
+    while (1) {
+        if (waitpid(child, status, 0) == -1) {
+            perror("waitpid");
+            return -1;
+        }
 
-    if (waitpid(child, status, 0) == -1) {
-        perror("waitpid");
-        return -1;
+        if (WIFEXITED(*status) || WIFSIGNALED(*status))
+            return 0;
+
+        if (WIFSTOPPED(*status)) {
+            if (WSTOPSIG(*status) & 0x80)
+                return 1;
+
+            sig = WSTOPSIG(*status);
+            if (sig == SIGTRAP)
+                sig = 0;
+
+            if (resume_until_next_syscall(child, sig) == -1)
+                return -1;
+        } else {
+            return -1;
+        }
     }
-
-    if (WIFEXITED(*status) || WIFSIGNALED(*status))
-        return 0;
-
-    if (WIFSTOPPED(*status)) {
-        if (WSTOPSIG(*status) & 0x80)
-            return 1;
-        return -1;
-    }
-
-    return -1;
 }
 
 int trace_program(char *const argv[],
