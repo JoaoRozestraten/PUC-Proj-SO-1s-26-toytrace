@@ -108,6 +108,7 @@ static int wait_for_initial_stop(pid_t child)
         fprintf(stderr, "Filho não parou corretamente\n");
         return -1;
     }
+    return 0;
 }
 
 static int configure_trace_options(pid_t child)
