@@ -97,12 +97,14 @@ static int wait_for_initial_stop(pid_t child)
      */
     int status;
     // Pai espera o filho para em SIGSTOP
-    if (waitpid(child, &status, 0) == -1) {
+    if (waitpid(child, &status, 0) == -1) 
+    {
         perror("Erro na execução do waitpid");
         return -1;
     }
     // Verifica se realmente parou
-    if (!WIFSTOPPED(status)) {
+    if (!WIFSTOPPED(status)) 
+    {
         fprintf(stderr, "Filho não parou corretamente\n");
         return -1;
     }
@@ -135,8 +137,8 @@ static int resume_until_next_syscall(pid_t child, int signal_to_deliver)
      * signal_to_deliver é repassado ao processo filho.
      */
 
-    // Continua a execução do processo monitorado
-    if (ptrace(PTRACE_SYSCALL, child, NULL, signal_to_deliver) == -1) {
+    if (ptrace(PTRACE_SYSCALL, child, NULL, signal_to_deliver) == -1) 
+    {
         perror("ptrace SYSCALL falhou");
         return -1;
     }
@@ -238,20 +240,30 @@ int trace_program(char *const argv[],
         }
 
         /*
-         * TODO Semana 4:
+         * Feito Semana 4:
          *
          * Use PTRACE_GETREGS para preencher regs.
          * Depois chame fill_event_from_regs() e observer().
          */
-        memset(&regs, 0, sizeof(regs));
-        fill_event_from_regs(child, entering, &regs, &ev);
-        if (observer != NULL) {
+        
+        memset(&regs, 0, sizeof(regs)); /* Inicializa os registradores */
+
+        if (ptrace(PTRACE_GETREGS, child, NULL, &regs) == -1) /* PTRACE_GETREGS */
+        {
+                perror("ptrace GETREGS falhou");
+                return -1;
+        }
+
+        fill_event_from_regs(child, entering, &regs, &ev); /* chama fill e observer */
+        if (observer != NULL) 
+        {
             observer(&ev, userdata);
         }
 
         entering = !entering;
 
-        if (resume_until_next_syscall(child, 0) < 0) {
+        if (resume_until_next_syscall(child, 0) < 0) 
+        {
             return -1;
         }
     }
