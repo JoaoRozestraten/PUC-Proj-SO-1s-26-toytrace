@@ -1,8 +1,8 @@
 #include "student_api.h"
-
 #include "syscall_names.h"
-
 #include <stdio.h>
+#include "trace_helpers.h"
+#include <sys/syscall.h>
 
 void student_debug_raw_event(const struct syscall_event *ev,
                              char *buf,
@@ -40,7 +40,7 @@ void student_format_event(const struct syscall_event *ev,
                           size_t bufsz)
 {
     /*
-     * TODO Semana 5:
+     * Feito Semana 5:
      *
      * Primeiro, formate uma syscall completa em uma linha simples.
      *
@@ -54,13 +54,73 @@ void student_format_event(const struct syscall_event *ev,
      * Para caminhos do processo monitorado, use read_child_string().
      * Se a leitura falhar, imprima "<ilegivel>".
      */
-    snprintf(buf, bufsz, "%s(%#lx, %#lx, %#lx, %#lx, %#lx, %#lx) = %ld",
-             syscall_name(ev->syscall_no),
-             ev->args[0],
-             ev->args[1],
-             ev->args[2],
-             ev->args[3],
-             ev->args[4],
-             ev->args[5],
-             ev->ret);
+
+    switch (ev->syscall_no) 
+    {
+    /* read(fd, buf, count) = ret */
+    case SYS_read:
+        snprintf(buf, bufsz, "read(%ld, %#lx, %lu) = %ld",
+                 (long)ev->args[0],
+                 ev->args[1],
+                 (unsigned long)ev->args[2],
+                 ev->ret);
+        break;
+
+    /* write(fd, buf, count) = ret */
+    case SYS_write:
+        snprintf(buf, bufsz, "write(%ld, %#lx, %lu) = %ld",
+                 (long)ev->args[0],
+                 ev->args[1],
+                 (unsigned long)ev->args[2],
+                 ev->ret);
+        break;
+
+    /* openat(dirfd, "path", flags, mode) = ret */
+    case SYS_openat: 
+    {
+        char path[256];
+
+        if (read_child_string(ev->pid, ev->args[1], path, sizeof(path)) < 0) 
+        {
+            snprintf(path, sizeof(path), "<ilegivel>");
+        }
+
+        snprintf(buf, bufsz, "openat(%ld, \"%s\", %#lx, %#lx) = %ld",
+                 (long)ev->args[0],
+                 path,
+                 ev->args[2],
+                 ev->args[3],
+                 ev->ret);
+        break;
+    }
+
+    /* execve("path", ...) = ret */
+    case SYS_execve: 
+    {
+        char path[256] = "<ilegivel>";
+            read_child_string(ev->pid, ev->args[0], path, sizeof(path));
+            snprintf(buf, bufsz, "execve(\"%s\", ...) = %ld", path, ev->ret);
+        break;
+    }
+
+    /* exit_group(status) = ret */
+    case SYS_exit_group:
+        snprintf(buf, bufsz, "exit_group(%ld) = %ld",
+                 (long)ev->args[0],
+                 ev->ret);
+        break;
+
+    default:
+        snprintf(buf, bufsz, "%s(%#lx, %#lx, %#lx, %#lx, %#lx, %#lx) = %ld",
+                 syscall_name(ev->syscall_no),
+                 ev->args[0],
+                 ev->args[1],
+                 ev->args[2],
+                 ev->args[3],
+                 ev->args[4],
+                 ev->args[5],
+                 ev->ret);
+        break;
+
+    }
 }
