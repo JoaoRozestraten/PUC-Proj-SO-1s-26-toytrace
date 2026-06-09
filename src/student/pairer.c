@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/ptrace.h>
 #include <errno.h>
+#include <sys/syscall.h>
 
 char student_last_execve_path[512] = "";
 char student_last_execve_args[1024] = "";

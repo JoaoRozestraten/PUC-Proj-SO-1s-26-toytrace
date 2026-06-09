@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "trace_helpers.h"
 #include <sys/syscall.h>
+#include <string.h>
 
 extern char student_last_execve_path[512];
 extern char student_last_execve_args[1024];
