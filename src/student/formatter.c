@@ -110,6 +110,13 @@ void student_format_event(const struct syscall_event *ev,
                  ev->ret);
         break;
 
+    /* close(fd) = ret */
+    case SYS_close:
+        snprintf(buf, bufsz, "close(%ld) = %ld",
+                 (long)ev->args[0],
+                 ev->ret);
+        break;
+
     default:
         snprintf(buf, bufsz, "%s(%#lx, %#lx, %#lx, %#lx, %#lx, %#lx) = %ld",
                  syscall_name(ev->syscall_no),
