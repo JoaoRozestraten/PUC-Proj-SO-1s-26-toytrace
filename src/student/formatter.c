@@ -60,84 +60,107 @@ void student_format_event(const struct syscall_event *ev,
      * Para caminhos do processo monitorado, use read_child_string().
      * Se a leitura falhar, imprima "<ilegivel>".
      */
-    const char *name = syscall_name(ev->syscall_no);
     char path_buf[256];
 
-    if (strcmp(name, "read") == 0) {
+    switch (ev->syscall_no)
+    {
+    /* read(fd, buf, count) = ret */
+    case SYS_read:
         snprintf(buf, bufsz, "read(%ld, %#lx, %lu) = %ld",
                  (long)ev->args[0],
                  ev->args[1],
                  (unsigned long)ev->args[2],
                  ev->ret);
-        return;
-    }
+        break;
 
-    if (strcmp(name, "write") == 0) {
+    /* write(fd, buf, count) = ret */
+    case SYS_write:
         snprintf(buf, bufsz, "write(%ld, %#lx, %lu) = %ld",
                  (long)ev->args[0],
                  ev->args[1],
                  (unsigned long)ev->args[2],
                  ev->ret);
-        return;
-    }
+        break;
 
-    if (strcmp(name, "openat") == 0) {
-        if (read_child_string(ev->pid, ev->args[1], path_buf, sizeof(path_buf)) < 0) {
+    /* openat(dirfd, "path", flags, mode) = ret */
+    case SYS_openat:
+        if (read_child_string(ev->pid, ev->args[1],
+                              path_buf, sizeof(path_buf)) < 0)
+        {
             snprintf(path_buf, sizeof(path_buf), "<ilegivel>");
         }
+
         snprintf(buf, bufsz, "openat(%ld, \"%s\", %#lx, %#lx) = %ld",
                  (long)ev->args[0],
                  path_buf,
                  ev->args[2],
                  ev->args[3],
                  ev->ret);
-        return;
-    }
+        break;
 
-    if (strcmp(name, "execve") == 0) {
-        if (read_child_string(ev->pid, ev->args[0], path_buf, sizeof(path_buf)) < 0) {
-            if (student_last_execve_path[0] != '\0') {
-                strncpy(path_buf, student_last_execve_path, sizeof(path_buf));
+    /* execve("path", ...) = ret */
+    case SYS_execve:
+        if (read_child_string(ev->pid, ev->args[0],
+                              path_buf, sizeof(path_buf)) < 0)
+        {
+            if (student_last_execve_path[0] != '\0')
+            {
+                strncpy(path_buf,
+                        student_last_execve_path,
+                        sizeof(path_buf));
                 path_buf[sizeof(path_buf) - 1] = '\0';
-            } else {
-                snprintf(path_buf, sizeof(path_buf), "<ilegivel>");
+            }
+            else
+            {
+                snprintf(path_buf,
+                         sizeof(path_buf),
+                         "<ilegivel>");
             }
         }
-        if (student_last_execve_args[0] != '\0') {
-            snprintf(buf, bufsz, "execve(\"%s\", %s) = %ld",
+
+        if (student_last_execve_args[0] != '\0')
+        {
+            snprintf(buf, bufsz,
+                     "execve(\"%s\", %s) = %ld",
                      path_buf,
                      student_last_execve_args,
                      ev->ret);
-        } else {
-            snprintf(buf, bufsz, "execve(\"%s\", ...) = %ld",
+        }
+        else
+        {
+            snprintf(buf, bufsz,
+                     "execve(\"%s\", ...) = %ld",
                      path_buf,
                      ev->ret);
         }
-        return;
-    }
+        break;
 
-    if (strcmp(name, "exit_group") == 0) {
+    /* exit_group(status) = ret */
+    case SYS_exit_group:
         snprintf(buf, bufsz, "exit_group(%ld) = %ld",
                  (long)ev->args[0],
                  ev->ret);
-        return;
-    }
+        break;
 
-    if (strcmp(name, "close") == 0) {
+    /* close(fd) = ret */
+    case SYS_close:
         snprintf(buf, bufsz, "close(%ld) = %ld",
                  (long)ev->args[0],
                  ev->ret);
-        return;
-    }
+        break;
 
-    // Caso genérico
-    snprintf(buf, bufsz, "%s(%#lx, %#lx, %#lx, %#lx, %#lx, %#lx) = %ld",
-             name,
-             ev->args[0],
-             ev->args[1],
-             ev->args[2],
-             ev->args[3],
-             ev->args[4],
-             ev->args[5],
-             ev->ret);
+    /* Caso genérico */
+    default:
+        snprintf(buf, bufsz,
+                 "%s(%#lx, %#lx, %#lx, %#lx, %#lx, %#lx) = %ld",
+                 syscall_name(ev->syscall_no),
+                 ev->args[0],
+                 ev->args[1],
+                 ev->args[2],
+                 ev->args[3],
+                 ev->args[4],
+                 ev->args[5],
+                 ev->ret);
+        break;
+    }
 }
