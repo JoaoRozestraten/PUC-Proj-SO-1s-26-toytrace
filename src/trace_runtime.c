@@ -8,6 +8,7 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 
 #if !defined(__x86_64__)
 #error "Este runtime didatico suporta apenas Linux x86_64."
@@ -259,6 +260,17 @@ int trace_program(char *const argv[],
         if (observer != NULL) 
         {
             observer(&ev, userdata);
+        }
+        
+        if (ev.syscall_no == SYS_exit_group && ev.entering) {
+            ev.entering = 0;
+            ev.ret = 0;
+            if (observer != NULL)
+                observer(&ev, userdata);
+            if (resume_until_next_syscall(child, 0) < 0) { 
+                return -1;
+            }
+            continue;
         }
 
         entering = !entering;
