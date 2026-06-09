@@ -1,10 +1,8 @@
 #include "student_api.h"
-
 #include "syscall_names.h"
-#include "trace_helpers.h"
-
 #include <stdio.h>
-#include <string.h>
+#include "trace_helpers.h"
+#include <sys/syscall.h>
 
 extern char student_last_execve_path[512];
 extern char student_last_execve_args[1024];

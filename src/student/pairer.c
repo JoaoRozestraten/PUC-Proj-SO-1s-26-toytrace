@@ -48,8 +48,7 @@ int student_pair_syscall(struct syscall_pairer *pairer,
      */
     if (ev->entering == 1) {
         /* Se for exit ou exit_group, pareia imediatamente pois nunca haverá um evento de saída */
-        if (strcmp(syscall_name(ev->syscall_no), "exit_group") == 0 ||
-            strcmp(syscall_name(ev->syscall_no), "exit") == 0) {
+        if (ev->syscall_no == SYS_exit_group || ev->syscall_no == SYS_exit) {
             *out = *ev;
             out->entering = 0;
             out->ret = 0;
@@ -65,7 +64,7 @@ int student_pair_syscall(struct syscall_pairer *pairer,
         pairer->has_entry = 1;
 
         /* Se for execve, lê e salva o caminho e os argumentos a partir da memoria do filho */
-        if (strcmp(syscall_name(ev->syscall_no), "execve") == 0) {
+        if (ev->syscall_no == SYS_execve) {
             read_child_string(ev->pid, ev->args[0], student_last_execve_path, sizeof(student_last_execve_path));
 
             char argv_buf[512] = "";
