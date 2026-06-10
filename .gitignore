@@ -21,3 +21,11 @@ dist/
 # Arquivos temporários do editor/sistema
 *.swp
 .DS_Store
+
+# Arquivos Make gerados
+toytrace
+tests/targets/exec_echo
+tests/targets/failed_open
+tests/targets/hello_write
+tests/targets/open_hosts
+tests/unit/test_student

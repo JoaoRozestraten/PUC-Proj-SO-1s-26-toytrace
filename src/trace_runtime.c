@@ -8,6 +8,7 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 
 #if !defined(__x86_64__)
 #error "Este runtime didatico suporta apenas Linux x86_64."
@@ -19,7 +20,7 @@ static void fill_event_from_regs(pid_t pid,
                                  struct syscall_event *ev)
 {
     /*
-     * FEITO Semana 4 (João):
+     * FEITO Semana 4:
      *
      * Preencha struct syscall_event usando os registradores x86_64.
      *
@@ -97,15 +98,18 @@ static int wait_for_initial_stop(pid_t child)
      */
     int status;
     // Pai espera o filho para em SIGSTOP
-    if (waitpid(child, &status, 0) == -1) {
+    if (waitpid(child, &status, 0) == -1) 
+    {
         perror("Erro na execução do waitpid");
         return -1;
     }
     // Verifica se realmente parou
-    if (!WIFSTOPPED(status)) {
+    if (!WIFSTOPPED(status)) 
+    {
         fprintf(stderr, "Filho não parou corretamente\n");
         return -1;
     }
+    return 0;
 }
 
 static int configure_trace_options(pid_t child)
@@ -135,8 +139,8 @@ static int resume_until_next_syscall(pid_t child, int signal_to_deliver)
      * signal_to_deliver é repassado ao processo filho.
      */
 
-    // Continua a execução do processo monitorado
-    if (ptrace(PTRACE_SYSCALL, child, NULL, signal_to_deliver) == -1) {
+    if (ptrace(PTRACE_SYSCALL, child, NULL, signal_to_deliver) == -1) 
+    {
         perror("ptrace SYSCALL falhou");
         return -1;
     }
@@ -162,22 +166,30 @@ static int wait_for_syscall_stop(pid_t child, int *status)
      * - com PTRACE_O_TRACESYSGOOD, syscall-stops aparecem com bit 0x80.
      * - paradas SIGTRAP comuns nao devem ser entregues de volta ao filho.
      */
+    int sig;
+    while (1) {
+        if (waitpid(child, status, 0) == -1) {
+            perror("waitpid");
+            return -1;
+        }
 
-    if (waitpid(child, status, 0) == -1) {
-        perror("waitpid");
-        return -1;
+        if (WIFEXITED(*status) || WIFSIGNALED(*status))
+            return 0;
+
+        if (WIFSTOPPED(*status)) {
+            if (WSTOPSIG(*status) & 0x80)
+                return 1;
+
+            sig = WSTOPSIG(*status);
+            if (sig == SIGTRAP)
+                sig = 0;
+
+            if (resume_until_next_syscall(child, sig) == -1)
+                return -1;
+        } else {
+            return -1;
+        }
     }
-
-    if (WIFEXITED(*status) || WIFSIGNALED(*status))
-        return 0;
-
-    if (WIFSTOPPED(*status)) {
-        if (WSTOPSIG(*status) & 0x80)
-            return 1;
-        return -1;
-    }
-
-    return -1;
 }
 
 int trace_program(char *const argv[],
@@ -230,20 +242,41 @@ int trace_program(char *const argv[],
         }
 
         /*
-         * TODO Semana 4:
+         * Feito Semana 4:
          *
          * Use PTRACE_GETREGS para preencher regs.
          * Depois chame fill_event_from_regs() e observer().
          */
-        memset(&regs, 0, sizeof(regs));
-        fill_event_from_regs(child, entering, &regs, &ev);
-        if (observer != NULL) {
+        
+        memset(&regs, 0, sizeof(regs)); /* Inicializa os registradores */
+
+        if (ptrace(PTRACE_GETREGS, child, NULL, &regs) == -1) /* PTRACE_GETREGS */
+        {
+                perror("ptrace GETREGS falhou");
+                return -1;
+        }
+
+        fill_event_from_regs(child, entering, &regs, &ev); /* chama fill e observer */
+        if (observer != NULL) 
+        {
             observer(&ev, userdata);
+        }
+        
+        if (ev.syscall_no == SYS_exit_group && ev.entering) {
+            ev.entering = 0;
+            ev.ret = 0;
+            if (observer != NULL)
+                observer(&ev, userdata);
+            if (resume_until_next_syscall(child, 0) < 0) { 
+                return -1;
+            }
+            continue;
         }
 
         entering = !entering;
 
-        if (resume_until_next_syscall(child, 0) < 0) {
+        if (resume_until_next_syscall(child, 0) < 0) 
+        {
             return -1;
         }
     }
