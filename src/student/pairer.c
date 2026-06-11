@@ -116,7 +116,7 @@ int student_pair_syscall(struct syscall_pairer *pairer,
         /* Atualiza com o valor de retorno obtido no evento de saida */
         out->ret = ev->ret;
         out->entering = 0; /* Para refletir que a chamada foi finalizada */
-        
+
         /* Limpa o estado de entrada para que o pairer possa processar a proxima syscall */
         pairer->has_entry = 0;
         /* Retorna 1 informando que a syscall foi totalmente capturada e 'out' esta pronto */
